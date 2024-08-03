@@ -32,12 +32,22 @@ const SearchBooks = () => {
       try {
         const response = await searchGoogleBooks(searchInput);
 
+        console.log(`Attempt ${attempts + 1}: Response status: ${response.status}`);
+
         if (!response.ok) {
           console.error(`Attempt ${attempts + 1} failed with status ${response.status}`);
-          throw new Error('something went wrong!');
+          if (response.status === 429) {
+            console.error('Rate limit exceeded. Retrying...');
+          } else {
+            throw new Error('something went wrong!');
+          }
         }
 
         const { items } = await response.json();
+
+        if (!items) {
+          throw new Error('No items found in response.');
+        }
 
         const bookData = items.map((book) => ({
           bookId: book.id,
@@ -55,9 +65,9 @@ const SearchBooks = () => {
         console.error(`Error during attempt ${attempts + 1}:`, err);
         attempts += 1;
         if (attempts < 3) {
-          await delay(1000); // wait 1 second before retrying
+          await delay(2000); // wait 2 seconds before retrying
         } else {
-          alert('Failed to fetch data after 3 attempts.');
+          alert('Failed to fetch data after 3 attempts. Please try again later.');
         }
       }
     }
@@ -79,7 +89,7 @@ const SearchBooks = () => {
 
       setSavedBookIds([...savedBookIds, bookId]);
     } catch (err) {
-      console.error(err);
+      console.error('Error saving book:', err);
     }
   };
 
