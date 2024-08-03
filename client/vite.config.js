@@ -14,5 +14,8 @@ export default defineConfig({
         changeOrigin: true
       }
     }
-  }
+  },
+  build: {
+    outDir: 'dist', // Ensure this matches where you want your build files
+  },
 })
