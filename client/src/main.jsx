@@ -1,22 +1,25 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import App from './App';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Home from './pages/Home'; 
-import SearchBooks from './pages/SearchBooks'; 
-import SavedBooks from './pages/SavedBooks'; 
-import LoginForm from './components/LoginForm'; 
-import SignupForm from './components/SignupForm'; 
+import Home from './pages/Home';
+import SearchBooks from './pages/SearchBooks';
+import SavedBooks from './pages/SavedBooks';
+import LoginForm from './components/LoginForm';
+import SignupForm from './components/SignupForm';
 
 const client = new ApolloClient({
-  uri: '/graphql',
+  uri: 'http://localhost:3001/graphql',
   cache: new InMemoryCache(),
 });
 
-ReactDOM.render(
+const container = document.getElementById('root');
+const root = createRoot(container);
+
+root.render(
   <ApolloProvider client={client}>
     <Router>
       <React.StrictMode>
@@ -31,6 +34,5 @@ ReactDOM.render(
         </Routes>
       </React.StrictMode>
     </Router>
-  </ApolloProvider>,
-  document.getElementById('root')
+  </ApolloProvider>
 );

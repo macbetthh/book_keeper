@@ -6,6 +6,8 @@ import { searchGoogleBooks } from '../utils/API';
 import Auth from '../utils/auth';
 import { saveBookIds, getSavedBookIds } from '../utils/localStorage';
 
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 const SearchBooks = () => {
   const [searchedBooks, setSearchedBooks] = useState([]);
   const [searchInput, setSearchInput] = useState('');
@@ -14,7 +16,7 @@ const SearchBooks = () => {
 
   useEffect(() => {
     return () => saveBookIds(savedBookIds);
-  });
+  }, [savedBookIds]);
 
   const handleFormSubmit = async (event) => {
     event.preventDefault();
@@ -23,28 +25,41 @@ const SearchBooks = () => {
       return false;
     }
 
-    try {
-      const response = await searchGoogleBooks(searchInput);
+    let attempts = 0;
+    let success = false;
 
-      if (!response.ok) {
-        throw new Error('something went wrong!');
+    while (attempts < 3 && !success) {
+      try {
+        const response = await searchGoogleBooks(searchInput);
+
+        if (!response.ok) {
+          console.error(`Attempt ${attempts + 1} failed with status ${response.status}`);
+          throw new Error('something went wrong!');
+        }
+
+        const { items } = await response.json();
+
+        const bookData = items.map((book) => ({
+          bookId: book.id,
+          authors: book.volumeInfo.authors || ['No author to display'],
+          title: book.volumeInfo.title,
+          description: book.volumeInfo.description,
+          image: book.volumeInfo.imageLinks?.thumbnail || '',
+          link: book.volumeInfo.infoLink,
+        }));
+
+        setSearchedBooks(bookData);
+        setSearchInput('');
+        success = true;
+      } catch (err) {
+        console.error(`Error during attempt ${attempts + 1}:`, err);
+        attempts += 1;
+        if (attempts < 3) {
+          await delay(1000); // wait 1 second before retrying
+        } else {
+          alert('Failed to fetch data after 3 attempts.');
+        }
       }
-
-      const { items } = await response.json();
-
-      const bookData = items.map((book) => ({
-        bookId: book.id,
-        authors: book.volumeInfo.authors || ['No author to display'],
-        title: book.volumeInfo.title,
-        description: book.volumeInfo.description,
-        image: book.volumeInfo.imageLinks?.thumbnail || '',
-        link: book.volumeInfo.infoLink,
-      }));
-
-      setSearchedBooks(bookData);
-      setSearchInput('');
-    } catch (err) {
-      console.error(err);
     }
   };
 
